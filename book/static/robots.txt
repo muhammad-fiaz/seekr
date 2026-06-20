@@ -4,11 +4,4 @@
 User-agent: *
 Allow: /
 
-# Sitemap location
 Sitemap: https://muhammad-fiaz.github.io/seekr/sitemap.xml
-
-# Crawl-delay for polite bots (optional)
-Crawl-delay: 1
-
-# Disallow internal pages that don't need indexing
-Disallow: /404.html
