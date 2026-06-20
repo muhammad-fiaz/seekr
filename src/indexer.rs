@@ -89,10 +89,11 @@ pub fn index_directory(db: &Database, root: &Path, config: &IndexerConfig) -> Se
         .filter_map(|e| {
             let entry = e.ok()?;
             let fe = build_entry(&entry, config)?;
-            if let Some(max_size) = config.max_file_size {
-                if !fe.is_dir && fe.size > max_size {
-                    return None;
-                }
+            if let Some(max_size) = config.max_file_size
+                && !fe.is_dir
+                && fe.size > max_size
+            {
+                return None;
             }
             Some(fe)
         })

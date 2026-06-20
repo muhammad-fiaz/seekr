@@ -88,29 +88,27 @@ pub fn search(db: &Database, query: &SearchQuery) -> SeekrResult<Vec<SearchResul
         if !query.include_dirs && entry.is_dir {
             return false;
         }
-        if let Some(min) = query.min_size {
-            if entry.size < min {
-                return false;
-            }
+        if let Some(min) = query.min_size
+            && entry.size < min
+        {
+            return false;
         }
-        if let Some(max) = query.max_size {
-            if entry.size > max {
-                return false;
-            }
+        if let Some(max) = query.max_size
+            && entry.size > max
+        {
+            return false;
         }
-        if let Some(after) = query.modified_after {
-            if let Some(modified) = entry.modified {
-                if modified < after {
-                    return false;
-                }
-            }
+        if let Some(after) = query.modified_after
+            && let Some(modified) = entry.modified
+            && modified < after
+        {
+            return false;
         }
-        if let Some(before) = query.modified_before {
-            if let Some(modified) = entry.modified {
-                if modified > before {
-                    return false;
-                }
-            }
+        if let Some(before) = query.modified_before
+            && let Some(modified) = entry.modified
+            && modified > before
+        {
+            return false;
         }
         true
     });

@@ -69,15 +69,15 @@ fn apply_env_overrides(config: &mut AppConfig) {
     if let Ok(val) = std::env::var("SEEKR_SEARCH_ROOT") {
         config.search_root = Some(PathBuf::from(val));
     }
-    if let Ok(val) = std::env::var("SEEKR_CACHE_TTL") {
-        if let Ok(ttl) = val.parse() {
-            config.cache_ttl = ttl;
-        }
+    if let Ok(val) = std::env::var("SEEKR_CACHE_TTL")
+        && let Ok(ttl) = val.parse()
+    {
+        config.cache_ttl = ttl;
     }
-    if let Ok(val) = std::env::var("SEEKR_DEFAULT_LIMIT") {
-        if let Ok(limit) = val.parse() {
-            config.default_limit = limit;
-        }
+    if let Ok(val) = std::env::var("SEEKR_DEFAULT_LIMIT")
+        && let Ok(limit) = val.parse()
+    {
+        config.default_limit = limit;
     }
     if let Ok(val) = std::env::var("SEEKR_COLOR") {
         config.color = val.parse().unwrap_or(config.color);
@@ -112,13 +112,13 @@ pub fn default_config_content() -> String {
 
 /// Validates the configuration values.
 pub fn validate_config(config: &AppConfig) -> SeekrResult<()> {
-    if let Some(ref root) = config.search_root {
-        if !root.exists() {
-            return Err(SeekrError::Config(format!(
-                "search root does not exist: {}",
-                root.display()
-            )));
-        }
+    if let Some(ref root) = config.search_root
+        && !root.exists()
+    {
+        return Err(SeekrError::Config(format!(
+            "search root does not exist: {}",
+            root.display()
+        )));
     }
 
     if config.cache_ttl == 0 {

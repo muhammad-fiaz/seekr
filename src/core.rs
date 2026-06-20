@@ -150,11 +150,11 @@ impl SeekrApp {
             query.include_hidden,
         );
 
-        if self.config.cache_enabled {
-            if let Some(cached) = self.search_cache.get(&cache_key) {
-                tracing::debug!("search cache hit for: {}", query.pattern);
-                return Ok(cached);
-            }
+        if self.config.cache_enabled
+            && let Some(cached) = self.search_cache.get(&cache_key)
+        {
+            tracing::debug!("search cache hit for: {}", query.pattern);
+            return Ok(cached);
         }
 
         let db = self
