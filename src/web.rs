@@ -125,54 +125,6 @@ impl Default for WebConfig {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_api_response_ok() {
-        let resp: ApiResponse<String> = ApiResponse::ok("hello".into());
-        assert!(resp.success);
-        assert!(resp.data.is_some());
-    }
-
-    #[test]
-    fn test_api_response_err() {
-        let resp: ApiResponse<String> = ApiResponse::err("fail");
-        assert!(!resp.success);
-        assert!(resp.error.is_some());
-    }
-
-    #[test]
-    fn test_health() {
-        let resp = api_health();
-        assert!(resp.success);
-    }
-
-    #[test]
-    fn test_web_config_default() {
-        let config = WebConfig::default();
-        assert_eq!(config.port, 8080);
-        assert!(config.cors_enabled);
-    }
-
-    #[test]
-    fn test_search_request_into_query() {
-        let req = SearchRequest {
-            pattern: "test".into(),
-            case_sensitive: true,
-            use_regex: false,
-            use_fuzzy: false,
-            extension: Some("txt".into()),
-            limit: 10,
-        };
-        let query: SearchQuery = req.into();
-        assert_eq!(query.pattern, "test");
-        assert!(query.case_sensitive);
-        assert_eq!(query.extension, Some("txt".into()));
-    }
-}
-
 /// Creates JSON API response for search.
 pub fn api_search(app: &SeekrApp, req: SearchRequest) -> ApiResponse<Vec<SearchResult>> {
     let query: SearchQuery = req.into();
@@ -219,4 +171,52 @@ pub fn api_health() -> ApiResponse<HealthResponse> {
         version: env!("CARGO_PKG_VERSION").into(),
         uptime_seconds: 0,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_api_response_ok() {
+        let resp: ApiResponse<String> = ApiResponse::ok("hello".into());
+        assert!(resp.success);
+        assert!(resp.data.is_some());
+    }
+
+    #[test]
+    fn test_api_response_err() {
+        let resp: ApiResponse<String> = ApiResponse::err("fail");
+        assert!(!resp.success);
+        assert!(resp.error.is_some());
+    }
+
+    #[test]
+    fn test_health() {
+        let resp = api_health();
+        assert!(resp.success);
+    }
+
+    #[test]
+    fn test_web_config_default() {
+        let config = WebConfig::default();
+        assert_eq!(config.port, 8080);
+        assert!(config.cors_enabled);
+    }
+
+    #[test]
+    fn test_search_request_into_query() {
+        let req = SearchRequest {
+            pattern: "test".into(),
+            case_sensitive: true,
+            use_regex: false,
+            use_fuzzy: false,
+            extension: Some("txt".into()),
+            limit: 10,
+        };
+        let query: SearchQuery = req.into();
+        assert_eq!(query.pattern, "test");
+        assert!(query.case_sensitive);
+        assert_eq!(query.extension, Some("txt".into()));
+    }
 }

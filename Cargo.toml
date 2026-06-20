@@ -78,6 +78,10 @@ harness = false
 name = "index_bench"
 harness = false
 
+[[bench]]
+name = "ml_ranking_bench"
+harness = false
+
 [[example]]
 name = "quick_start"
 
@@ -101,3 +105,27 @@ name = "platform_ops"
 
 [[example]]
 name = "watcher_demo"
+
+[[example]]
+name = "content_search_demo"
+
+[[example]]
+name = "ml_search_demo"
+
+[[example]]
+name = "semantic_search_demo"
+
+[[example]]
+name = "history_demo"
+
+[[example]]
+name = "saved_searches_demo"
+
+[[example]]
+name = "plugin_demo"
+
+[[example]]
+name = "i18n_demo"
+
+[[example]]
+name = "ranking_demo"

@@ -163,7 +163,7 @@ mod tests {
             path: format!("/tmp/{}", name).into(),
             file_name: name.into(),
             size,
-            extension: name.split('.').last().map(|s| s.to_string()),
+            extension: name.split('.').next_back().map(|s| s.to_string()),
             is_dir: false,
             is_hidden: false,
             modified: None,

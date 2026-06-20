@@ -165,7 +165,7 @@ mod tests {
             path: path.into(),
             file_name: name.into(),
             size: 100,
-            extension: name.split('.').last().map(|s| s.to_string()),
+            extension: name.split('.').next_back().map(|s| s.to_string()),
             is_dir: false,
             is_hidden: false,
             modified: None,

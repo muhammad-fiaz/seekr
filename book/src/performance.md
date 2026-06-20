@@ -6,12 +6,17 @@ Performance measured with `cargo bench` on Windows (x86_64):
 
 | Benchmark | Time | Description |
 |-----------|------|-------------|
-| `full_index_5000_files` | **~62 ms** | Index 5,000 files with parallel traversal |
-| `incremental_index` | **~95 ms** | Incremental index update |
-| `index_directory` | **~73 ms** | Index a real-world project directory |
-| `search_filename` | **~828 ns** | Filename search (< 1 microsecond) |
-| `search_regex` | **~21 us** | Regex pattern search |
-| `search_fuzzy` | **~2.8 ms** | Fuzzy matching with scoring |
+| `full_index_5000_files` | **~75 ms** | Index 5,000 files with parallel traversal |
+| `incremental_index` | **~84 ms** | Incremental index update |
+| `index_directory` | **~71 ms** | Index a real-world project directory |
+| `search_filename` | **~722 ns** | Filename search (< 1 microsecond) |
+| `search_regex` | **~19 us** | Regex pattern search |
+| `search_fuzzy` | **~3.0 ms** | Fuzzy matching with scoring |
+| `tfidf_ranking_1000` | **~326 us** | TF-IDF ranking over 1,000 files |
+| `bm25_ranking_1000` | **~317 us** | BM25 ranking over 1,000 files |
+| `combined_ranking_1000` | **~445 us** | Combined ranking over 1,000 files |
+| `ml_score_100_entries` | **~30 us** | ML relevance scoring for 100 files |
+| `semantic_similarity_500` | **~830 us** | Semantic similarity for 500 files |
 
 Run benchmarks yourself:
 
