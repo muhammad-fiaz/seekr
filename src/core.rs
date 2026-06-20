@@ -738,8 +738,8 @@ mod tests {
         // Both may return results (ML scores on all features), but
         // the matching query should have higher scores on average
         if !results_match.is_empty() && !results_no_match.is_empty() {
-            let avg_match: f64 = results_match.iter().map(|r| r.score).sum::<f64>()
-                / results_match.len() as f64;
+            let avg_match: f64 =
+                results_match.iter().map(|r| r.score).sum::<f64>() / results_match.len() as f64;
             let avg_no_match: f64 = results_no_match.iter().map(|r| r.score).sum::<f64>()
                 / results_no_match.len() as f64;
             assert!(
