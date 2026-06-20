@@ -21,8 +21,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
 <!-- SEO Metadata -->
 <meta name="description" content="Seekr: A fast, local-first, privacy-focused file search engine and CLI utility written in Rust. Completely offline with zero telemetry.">
-<meta name="keywords" content="Rust, Seekr, file search, CLI, search engine, indexing, fuzzy search, regex, privacy, local-first, offline, file indexer">
+<meta name="keywords" content="Rust, Seekr, file search, CLI, search engine, indexing, fuzzy search, regex, privacy, local-first, offline, file indexer, SQLite, parallel indexing, file monitoring">
 <meta name="author" content="Muhammad Fiaz">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://muhammad-fiaz.github.io/seekr/">
 <link rel="manifest" href="/seekr/manifest.json">
 
 <!-- Open Graph / Facebook -->
@@ -31,13 +33,18 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <meta property="og:title" content="Seekr - Fast, Private File Search Engine in Rust">
 <meta property="og:description" content="A fast, local-first, privacy-focused file search engine and CLI utility written in Rust. Completely offline with zero telemetry.">
 <meta property="og:image" content="https://muhammad-fiaz.github.io/seekr/seekr_logo.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:site_name" content="Seekr Documentation">
+<meta property="og:locale" content="en_US">
 
 <!-- Twitter -->
-<meta property="twitter:card" content="summary_large_image">
-<meta property="twitter:url" content="https://muhammad-fiaz.github.io/seekr/">
-<meta property="twitter:title" content="Seekr - Fast, Private File Search Engine in Rust">
-<meta property="twitter:description" content="A fast, local-first, privacy-focused file search engine and CLI utility written in Rust. Completely offline with zero telemetry.">
-<meta property="twitter:image" content="https://muhammad-fiaz.github.io/seekr/seekr_logo.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="https://muhammad-fiaz.github.io/seekr/">
+<meta name="twitter:title" content="Seekr - Fast, Private File Search Engine in Rust">
+<meta name="twitter:description" content="A fast, local-first, privacy-focused file search engine and CLI utility written in Rust. Completely offline with zero telemetry.">
+<meta name="twitter:image" content="https://muhammad-fiaz.github.io/seekr/seekr_logo.png">
+<meta name="twitter:creator" content="@muhammadfiaz_">
 
 <!-- Structured JSON-LD Schema -->
 <script type="application/ld+json">
@@ -51,17 +58,34 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   "author": {
     "@type": "Person",
     "name": "Muhammad Fiaz",
-    "email": "contact@muhammadfiaz.com",
     "url": "https://github.com/muhammad-fiaz"
   },
   "downloadUrl": "https://github.com/muhammad-fiaz/seekr",
   "softwareVersion": "0.1.0",
   "description": "A fast, local-first, privacy-focused file search engine and CLI utility written in Rust. Completely offline with zero telemetry.",
+  "url": "https://muhammad-fiaz.github.io/seekr/",
   "offers": {
     "@type": "Offer",
     "price": "0.00",
     "priceCurrency": "USD"
-  }
+  },
+  "featureList": [
+    "Filename and path search",
+    "Regex pattern matching",
+    "Fuzzy search with scoring",
+    "Parallel filesystem indexing",
+    "SQLite-backed persistence",
+    "Real-time filesystem watching",
+    "Multi-tier caching",
+    "JSON/CSV export",
+    "Cross-platform support"
+  ],
+  "screenshot": "https://muhammad-fiaz.github.io/seekr/seekr_logo.png",
+  "softwareHelp": {
+    "@type": "CreativeWork",
+    "url": "https://muhammad-fiaz.github.io/seekr/"
+  },
+  "applicationSuite": "Seekr"
 }
 </script>
 <script type="application/ld+json">
@@ -70,6 +94,29 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   "@type": "WebSite",
   "name": "Seekr Documentation",
   "url": "https://muhammad-fiaz.github.io/seekr/",
-  "description": "Official documentation for Seekr: A fast, local-first, privacy-focused file search engine written in Rust."
+  "description": "Official documentation for Seekr: A fast, local-first, privacy-focused file search engine written in Rust.",
+  "author": {
+    "@type": "Person",
+    "name": "Muhammad Fiaz"
+  },
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": "https://muhammad-fiaz.github.io/seekr/search?q={search_term_string}",
+    "query-input": "required name=search_term_string"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Home",
+      "item": "https://muhammad-fiaz.github.io/seekr/"
+    }
+  ]
 }
 </script>

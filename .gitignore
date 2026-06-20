@@ -15,8 +15,8 @@ Thumbs.db
 # Build
 *.pdb
 
-# Documentation
-docs/book/
+# Documentation build output
+book/book/
 
 # Temp
 *.tmp
