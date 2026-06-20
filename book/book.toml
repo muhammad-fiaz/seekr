@@ -1,0 +1,10 @@
+[book]
+authors = ["Muhammad Fiaz <contact@muhammadfiaz.com>"]
+language = "en"
+src = "src"
+title = "Seekr Documentation"
+
+[output.html]
+git-repository-url = "https://github.com/muhammad-fiaz/seekr"
+default-theme = "navy"
+preferred-dark-theme = "navy"

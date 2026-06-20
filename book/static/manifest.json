@@ -1,0 +1,21 @@
+{
+  "name": "Seekr Documentation",
+  "short_name": "Seekr Docs",
+  "description": "Official documentation for Seekr: A fast, local-first, privacy-focused file search engine written in Rust.",
+  "start_url": "/seekr/",
+  "display": "standalone",
+  "background_color": "#1a1a2e",
+  "theme_color": "#16213e",
+  "icons": [
+    {
+      "src": "/seekr/seekr_logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/seekr/seekr_logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
