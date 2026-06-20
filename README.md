@@ -91,7 +91,7 @@ A Rust-powered, cross-platform file search engine designed with a clean, modular
 | **Real-time Collaboration** | Share search sessions with collaborators. |
 | **Advanced Analytics** | Detailed search and file type analytics. |
 | **Web UI API** | HTTP API for web interface integration. |
-| **Multi-language Support** | 10 languages supported (EN, ES, FR, DE, JA, ZH, PT, RU, AR, HI). |
+| **Multi-language Support** | 30 languages supported (EN, ES, FR, DE, JA, ZH, PT, RU, AR, HI, KO, IT, TR, PL, NL, SV, TH, VI, ID, CS, EL, HE, FI, NO, DA, HU, RO, UK, BN, TA). |
 | **Mobile API** | Lightweight API optimized for mobile clients. |
 
 </details>

@@ -44,7 +44,7 @@ Seekr is built as a Rust library with a CLI on top. All functionality is availab
 | `web` | HTTP API for web UI integration |
 | `ml` | Machine learning-based relevance scoring |
 | `semantic` | TF-IDF semantic search |
-| `i18n` | Multi-language support (10 languages) |
+| `i18n` | Multi-language support (30 languages) |
 | `mobile` | Mobile companion API with pagination |
 | `watcher` | Filesystem monitoring, event processing |
 | `platform` | OS-specific abstractions |

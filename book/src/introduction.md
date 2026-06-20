@@ -24,7 +24,7 @@ Most operating system file search utilities are slow, limited, and often send da
 - **Extensibility** - Plugin system with lifecycle hooks for custom behavior.
 - **Collaboration** - Shared search sessions and real-time collaboration features.
 - **Analytics** - Advanced search and file type analytics for insights.
-- **Internationalization** - Multi-language support (10 languages).
+- **Internationalization** - Multi-language support (30 languages).
 - **Mobile-ready** - Lightweight API optimized for mobile clients.
 
 ## Features

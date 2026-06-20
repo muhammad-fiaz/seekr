@@ -151,6 +151,64 @@ impl Default for AnalyticsCollector {
     }
 }
 
+/// Analyzes file types from a list of entries.
+pub fn analyze_file_types(entries: &[FileEntry]) -> FileTypeAnalytics {
+    let mut extension_counts: HashMap<String, u64> = HashMap::new();
+    let mut extension_sizes: HashMap<String, u64> = HashMap::new();
+
+    for entry in entries {
+        if let Some(ref ext) = entry.extension {
+            *extension_counts.entry(ext.clone()).or_insert(0) += 1;
+            *extension_sizes.entry(ext.clone()).or_insert(0) += entry.size;
+        }
+    }
+
+    let mut top_extensions: Vec<(String, u64)> = extension_counts
+        .iter()
+        .map(|(k, v)| (k.clone(), *v))
+        .collect();
+    top_extensions.sort_by_key(|b| std::cmp::Reverse(b.1));
+    top_extensions.truncate(10);
+
+    let avg_sizes: HashMap<String, f64> = extension_counts
+        .iter()
+        .map(|(ext, &count)| {
+            let total_size = extension_sizes.get(ext).copied().unwrap_or(0);
+            (ext.clone(), total_size as f64 / count as f64)
+        })
+        .collect();
+
+    FileTypeAnalytics {
+        extension_counts,
+        extension_sizes,
+        top_extensions,
+        avg_sizes,
+    }
+}
+
+/// Generates a comprehensive analytics report.
+pub fn generate_report(
+    collector: &AnalyticsCollector,
+    entries: &[FileEntry],
+    stats: &IndexStats,
+) -> AnalyticsReport {
+    let search = collector.search_analytics();
+    let file_types = analyze_file_types(entries);
+
+    AnalyticsReport {
+        generated_at: Utc::now(),
+        index_stats: stats.clone(),
+        search,
+        file_types,
+        performance: PerformanceMetrics {
+            indexing_speed: 0.0,
+            search_speed: 0.0,
+            cache_hit_rate: 0.0,
+            memory_usage: 0,
+        },
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -236,63 +294,5 @@ mod tests {
     fn test_analyze_empty() {
         let analytics = analyze_file_types(&[]);
         assert!(analytics.top_extensions.is_empty());
-    }
-}
-
-/// Analyzes file types from a list of entries.
-pub fn analyze_file_types(entries: &[FileEntry]) -> FileTypeAnalytics {
-    let mut extension_counts: HashMap<String, u64> = HashMap::new();
-    let mut extension_sizes: HashMap<String, u64> = HashMap::new();
-
-    for entry in entries {
-        if let Some(ref ext) = entry.extension {
-            *extension_counts.entry(ext.clone()).or_insert(0) += 1;
-            *extension_sizes.entry(ext.clone()).or_insert(0) += entry.size;
-        }
-    }
-
-    let mut top_extensions: Vec<(String, u64)> = extension_counts
-        .iter()
-        .map(|(k, v)| (k.clone(), *v))
-        .collect();
-    top_extensions.sort_by_key(|b| std::cmp::Reverse(b.1));
-    top_extensions.truncate(10);
-
-    let avg_sizes: HashMap<String, f64> = extension_counts
-        .iter()
-        .map(|(ext, &count)| {
-            let total_size = extension_sizes.get(ext).copied().unwrap_or(0);
-            (ext.clone(), total_size as f64 / count as f64)
-        })
-        .collect();
-
-    FileTypeAnalytics {
-        extension_counts,
-        extension_sizes,
-        top_extensions,
-        avg_sizes,
-    }
-}
-
-/// Generates a comprehensive analytics report.
-pub fn generate_report(
-    collector: &AnalyticsCollector,
-    entries: &[FileEntry],
-    stats: &IndexStats,
-) -> AnalyticsReport {
-    let search = collector.search_analytics();
-    let file_types = analyze_file_types(entries);
-
-    AnalyticsReport {
-        generated_at: Utc::now(),
-        index_stats: stats.clone(),
-        search,
-        file_types,
-        performance: PerformanceMetrics {
-            indexing_speed: 0.0,
-            search_speed: 0.0,
-            cache_hit_rate: 0.0,
-            memory_usage: 0,
-        },
     }
 }
