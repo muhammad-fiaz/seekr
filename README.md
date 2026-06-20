@@ -104,7 +104,13 @@ A Rust-powered, cross-platform file search engine designed with a clean, modular
 ## Prerequisites
 
 Before installing Seekr, ensure you have:
-- **Rust Toolchain**: v1.85.0+ (supports Rust 2024 Edition)
+
+- **Rust**: v1.85.0+ (Rust 2024 Edition). Install via [rustup](https://rustup.rs/):
+  ```bash
+  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+  ```
+- **Cargo**: Comes bundled with Rust. Verify with `cargo --version`.
+- **Git**: Required for cloning the repository. Install from [git-scm.com](https://git-scm.com/).
 
 ## Supported Platforms
 
@@ -259,6 +265,11 @@ seekr grep "fn \w+" --regex
 Filter by extension:
 ```bash
 seekr grep "error" --extension rs
+```
+
+Restrict to a subdirectory:
+```bash
+seekr grep "error" --root src/
 ```
 
 ### ML & Semantic Search

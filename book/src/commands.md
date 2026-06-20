@@ -46,18 +46,18 @@ seekr search <PATTERN> [OPTIONS]
 
 ## seekr grep
 
-Search file contents (grep-like).
+Search file contents (grep-like). Reads files in parallel for speed.
 
 ```bash
 seekr grep <PATTERN> [OPTIONS]
 ```
 
 **Options:**
-- `--root <PATH>` - Search in a specific root directory
+- `--root <PATH>` - Restrict search to files under this directory
 - `-S, --case-sensitive` - Case-sensitive matching
 - `-r, --regex` - Use regex matching
 - `-x, --extension <EXT>` - Filter by extension
-- `--max-size <BYTES>` - Maximum file size
+- `--max-size <BYTES>` - Maximum file size to search
 - `-l, --limit <N>` - Maximum number of results
 
 ## seekr ml-search

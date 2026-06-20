@@ -2,11 +2,31 @@
 
 ## Prerequisites
 
-- **Rust Toolchain**: v1.85.0+ (Rust 2024 Edition)
+Before installing Seekr, ensure you have the following tools installed:
 
-Install Rust from [rustup.rs](https://rustup.rs/):
+- **Rust**: v1.85.0+ (Rust 2024 Edition). Install via [rustup](https://rustup.rs/):
+  ```bash
+  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+  ```
+- **Cargo**: Comes bundled with Rust. Verify with `cargo --version`.
+- **Git**: Required for cloning the repository. Install from [git-scm.com](https://git-scm.com/) or via your package manager:
+  ```bash
+  # Ubuntu/Debian
+  sudo apt install git
+
+  # macOS (with Homebrew)
+  brew install git
+
+  # Windows (with Chocolatey)
+  choco install git
+  ```
+
+### Verify Prerequisites
+
 ```bash
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+rustc --version    # Should show 1.85.0+
+cargo --version    # Should show cargo 1.85.0+
+git --version      # Any recent version
 ```
 
 ## Install via Cargo

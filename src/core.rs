@@ -102,7 +102,12 @@ impl SeekrApp {
             .db
             .lock()
             .map_err(|e| SeekrError::Index(format!("lock error: {}", e)))?;
-        db.get_stats(root)
+        let stats = db.get_stats(root)?;
+        drop(db);
+
+        self.rebuild_semantic_encoder().ok();
+
+        Ok(stats)
     }
 
     /// Performs an incremental index update.
@@ -130,7 +135,12 @@ impl SeekrApp {
             .db
             .lock()
             .map_err(|e| SeekrError::Index(format!("lock error: {}", e)))?;
-        db.get_stats(root)
+        let stats = db.get_stats(root)?;
+        drop(db);
+
+        self.rebuild_semantic_encoder().ok();
+
+        Ok(stats)
     }
 
     /// Removes stale entries from the index.
@@ -264,7 +274,8 @@ impl SeekrApp {
             .db
             .lock()
             .map_err(|e| SeekrError::Search(format!("lock error: {}", e)))?;
-        let entries = db.get_all_files(100_000, 0)?;
+        let file_count = db.count()? as i64;
+        let entries = db.get_all_files(file_count, 0)?;
         drop(db);
         crate::content_search::content_search(&entries, pattern, config)
     }
@@ -351,7 +362,8 @@ impl SeekrApp {
             .db
             .lock()
             .map_err(|e| SeekrError::Search(format!("lock error: {}", e)))?;
-        let entries = db.get_all_files(100_000, 0)?;
+        let file_count = db.count()? as i64;
+        let entries = db.get_all_files(file_count, 0)?;
         let stats = db.get_stats(root)?;
         drop(db);
 
@@ -365,7 +377,8 @@ impl SeekrApp {
             .db
             .lock()
             .map_err(|e| SeekrError::Search(format!("lock error: {}", e)))?;
-        let entries = db.get_all_files(1000, 0)?;
+        let file_count = db.count()? as i64;
+        let entries = db.get_all_files(file_count, 0)?;
         drop(db);
 
         let mut results: Vec<SearchResult> = entries
@@ -397,7 +410,8 @@ impl SeekrApp {
             .db
             .lock()
             .map_err(|e| SeekrError::Search(format!("lock error: {}", e)))?;
-        let entries = db.get_all_files(10000, 0)?;
+        let file_count = db.count()? as i64;
+        let entries = db.get_all_files(file_count, 0)?;
         drop(db);
 
         {
@@ -445,7 +459,8 @@ impl SeekrApp {
             .db
             .lock()
             .map_err(|e| SeekrError::Search(format!("lock error: {}", e)))?;
-        let entries = db.get_all_files(100_000, 0)?;
+        let file_count = db.count()? as i64;
+        let entries = db.get_all_files(file_count, 0)?;
         drop(db);
 
         let mut enc = self
@@ -687,5 +702,201 @@ mod tests {
         if results.len() > 1 {
             assert!(results[0].entry.file_name <= results[1].entry.file_name);
         }
+    }
+
+    #[test]
+    fn test_ml_search() {
+        let dir = setup_test_dir();
+        let app = setup_app();
+        app.index(dir.path()).unwrap();
+
+        let query = SearchQuery {
+            pattern: "hello".into(),
+            ..SearchQuery::default()
+        };
+        let results = app.ml_search(&query).unwrap();
+        assert!(!results.is_empty());
+        assert!(results[0].score > 0.0);
+    }
+
+    #[test]
+    fn test_ml_search_no_match() {
+        let dir = setup_test_dir();
+        let app = setup_app();
+        app.index(dir.path()).unwrap();
+
+        let query_match = SearchQuery {
+            pattern: "hello".into(),
+            ..SearchQuery::default()
+        };
+        let query_no_match = SearchQuery {
+            pattern: "zzzznotfound".into(),
+            ..SearchQuery::default()
+        };
+        let results_match = app.ml_search(&query_match).unwrap();
+        let results_no_match = app.ml_search(&query_no_match).unwrap();
+        // Both may return results (ML scores on all features), but
+        // the matching query should have higher scores on average
+        if !results_match.is_empty() && !results_no_match.is_empty() {
+            let avg_match: f64 = results_match.iter().map(|r| r.score).sum::<f64>()
+                / results_match.len() as f64;
+            let avg_no_match: f64 = results_no_match.iter().map(|r| r.score).sum::<f64>()
+                / results_no_match.len() as f64;
+            assert!(
+                avg_match > avg_no_match,
+                "matching query should score higher on average"
+            );
+        }
+    }
+
+    #[test]
+    fn test_ml_search_limit() {
+        let dir = setup_test_dir();
+        let app = setup_app();
+        app.index(dir.path()).unwrap();
+
+        let query = SearchQuery {
+            pattern: ".".into(),
+            limit: Some(2),
+            ..SearchQuery::default()
+        };
+        let results = app.ml_search(&query).unwrap();
+        assert!(results.len() <= 2);
+    }
+
+    #[test]
+    fn test_semantic_search() {
+        let dir = setup_test_dir();
+        let app = setup_app();
+        app.index(dir.path()).unwrap();
+
+        let query = SearchQuery {
+            pattern: "hello".into(),
+            ..SearchQuery::default()
+        };
+        let results = app.semantic_search(&query).unwrap();
+        assert!(!results.is_empty());
+        assert!(results[0].score > 0.0);
+    }
+
+    #[test]
+    fn test_content_search_basic() {
+        let dir = setup_test_dir();
+        let app = setup_app();
+        app.index(dir.path()).unwrap();
+
+        let config = crate::content_search::ContentSearchConfig::default();
+        let results = app.content_search("hello", &config).unwrap();
+        assert!(!results.is_empty());
+        assert!(results.iter().any(|r| r.total_matches > 0));
+    }
+
+    #[test]
+    fn test_content_search_case_sensitive() {
+        let dir = setup_test_dir();
+        let app = setup_app();
+        app.index(dir.path()).unwrap();
+
+        let config = crate::content_search::ContentSearchConfig {
+            case_sensitive: true,
+            ..Default::default()
+        };
+        let results_upper = app.content_search("HELLO", &config).unwrap();
+        let total_upper: usize = results_upper.iter().map(|r| r.total_matches).sum();
+        assert_eq!(total_upper, 0);
+    }
+
+    #[test]
+    fn test_content_search_case_insensitive() {
+        let dir = setup_test_dir();
+        let app = setup_app();
+        app.index(dir.path()).unwrap();
+
+        let config = crate::content_search::ContentSearchConfig {
+            case_sensitive: false,
+            ..Default::default()
+        };
+        let results = app.content_search("HELLO", &config).unwrap();
+        let total: usize = results.iter().map(|r| r.total_matches).sum();
+        assert!(total > 0);
+    }
+
+    #[test]
+    fn test_content_search_with_root() {
+        let dir = setup_test_dir();
+        let app = setup_app();
+        app.index(dir.path()).unwrap();
+
+        let sub = dir.path().join("subdir");
+        let config_root = crate::content_search::ContentSearchConfig {
+            root: Some(sub.clone()),
+            ..Default::default()
+        };
+        let config_all = crate::content_search::ContentSearchConfig::default();
+        let results_root = app.content_search("content", &config_root).unwrap();
+        let results_all = app.content_search("content", &config_all).unwrap();
+        assert!(results_root.len() <= results_all.len());
+    }
+
+    #[test]
+    fn test_record_and_get_history() {
+        let app = setup_app();
+        app.record_search("test", false, false, false, 5).unwrap();
+        app.record_search("hello", true, true, false, 10).unwrap();
+        let history = app.get_history(10).unwrap();
+        assert_eq!(history.len(), 2);
+        assert_eq!(history[0].pattern, "hello");
+        assert_eq!(history[1].pattern, "test");
+    }
+
+    #[test]
+    fn test_clear_history() {
+        let app = setup_app();
+        app.record_search("test", false, false, false, 5).unwrap();
+        assert!(!app.get_history(10).unwrap().is_empty());
+        app.clear_history().unwrap();
+        assert!(app.get_history(10).unwrap().is_empty());
+    }
+
+    #[test]
+    fn test_save_load_delete_search() {
+        let app = setup_app();
+        let query = SearchQuery {
+            pattern: "*.rs".into(),
+            ..SearchQuery::default()
+        };
+        app.save_search("rust", Some("Rust files"), &query, &["rust".into()])
+            .unwrap();
+
+        let loaded = app.load_saved_search("rust").unwrap();
+        assert!(loaded.is_some());
+        assert_eq!(loaded.unwrap().pattern, "*.rs");
+
+        let list = app.list_saved_searches().unwrap();
+        assert_eq!(list.len(), 1);
+
+        assert!(app.delete_saved_search("rust").unwrap());
+        assert!(app.load_saved_search("rust").unwrap().is_none());
+    }
+
+    #[test]
+    fn test_analytics_report() {
+        let dir = setup_test_dir();
+        let app = setup_app();
+        app.index(dir.path()).unwrap();
+        let report = app.analytics_report(dir.path()).unwrap();
+        assert!(report.index_stats.total_files >= 5);
+        assert!(!report.file_types.top_extensions.is_empty());
+    }
+
+    #[test]
+    fn test_rebuild_semantic_encoder() {
+        let dir = setup_test_dir();
+        let app = setup_app();
+        app.index(dir.path()).unwrap();
+        app.rebuild_semantic_encoder().unwrap();
+        let enc = app.semantic_encoder.lock().unwrap();
+        assert!(enc.is_some());
+        assert!(enc.as_ref().unwrap().total_documents() > 0);
     }
 }

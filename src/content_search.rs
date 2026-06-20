@@ -2,6 +2,7 @@ use crate::error::{SeekrError, SeekrResult};
 use crate::types::FileEntry;
 use rayon::prelude::*;
 use regex::Regex;
+use std::path::PathBuf;
 /// A single content match within a file.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ContentMatch {
@@ -43,6 +44,8 @@ pub struct ContentSearchConfig {
     pub context_after: usize,
     /// Maximum number of results.
     pub limit: Option<usize>,
+    /// Restrict search to files under this root path.
+    pub root: Option<PathBuf>,
 }
 
 impl Default for ContentSearchConfig {
@@ -55,6 +58,7 @@ impl Default for ContentSearchConfig {
             context_before: 0,
             context_after: 0,
             limit: None,
+            root: None,
         }
     }
 }
@@ -102,6 +106,12 @@ pub fn content_search(
                 && e.extension.as_deref() != Some(ext.as_str())
             {
                 return false;
+            }
+            if let Some(ref root) = config.root {
+                let entry_parent = e.parent_dir.as_path();
+                if !entry_parent.starts_with(root) {
+                    return false;
+                }
             }
             true
         })

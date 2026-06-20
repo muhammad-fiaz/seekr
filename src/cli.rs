@@ -777,7 +777,7 @@ fn cmd_reveal(path_str: &str) -> SeekrResult<()> {
 fn cmd_grep(
     app: &SeekrApp,
     pattern: &str,
-    _root: Option<&str>,
+    root: Option<&str>,
     case_sensitive: bool,
     use_regex: bool,
     extension: Option<&str>,
@@ -793,6 +793,7 @@ fn cmd_grep(
         context_before: 0,
         context_after: 0,
         limit,
+        root: root.map(std::path::PathBuf::from),
     };
 
     let start = Instant::now();
@@ -1373,5 +1374,98 @@ mod tests {
             "10",
         ]);
         assert!(cli.is_ok());
+    }
+
+    #[test]
+    fn test_cli_parse_ml_search() {
+        let cli = Cli::try_parse_from(["seekr", "ml-search", "hello"]);
+        assert!(cli.is_ok());
+        match cli.unwrap().command {
+            Commands::MlSearch { pattern, limit } => {
+                assert_eq!(pattern, "hello");
+                assert_eq!(limit, None);
+            }
+            _ => panic!("expected MlSearch command"),
+        }
+    }
+
+    #[test]
+    fn test_cli_parse_ml_search_with_limit() {
+        let cli = Cli::try_parse_from(["seekr", "ml-search", "hello", "--limit", "10"]);
+        assert!(cli.is_ok());
+        match cli.unwrap().command {
+            Commands::MlSearch { pattern, limit } => {
+                assert_eq!(pattern, "hello");
+                assert_eq!(limit, Some(10));
+            }
+            _ => panic!("expected MlSearch command"),
+        }
+    }
+
+    #[test]
+    fn test_cli_parse_semantic() {
+        let cli = Cli::try_parse_from(["seekr", "semantic", "hello"]);
+        assert!(cli.is_ok());
+        match cli.unwrap().command {
+            Commands::Semantic { query, limit } => {
+                assert_eq!(query, "hello");
+                assert_eq!(limit, None);
+            }
+            _ => panic!("expected Semantic command"),
+        }
+    }
+
+    #[test]
+    fn test_cli_parse_grep() {
+        let cli = Cli::try_parse_from(["seekr", "grep", "fn main"]);
+        assert!(cli.is_ok());
+        match cli.unwrap().command {
+            Commands::Grep {
+                pattern,
+                case_sensitive,
+                regex,
+                extension,
+                ..
+            } => {
+                assert_eq!(pattern, "fn main");
+                assert!(!case_sensitive);
+                assert!(!regex);
+                assert!(extension.is_none());
+            }
+            _ => panic!("expected Grep command"),
+        }
+    }
+
+    #[test]
+    fn test_cli_parse_grep_with_options() {
+        let cli = Cli::try_parse_from([
+            "seekr",
+            "grep",
+            "error",
+            "--case-sensitive",
+            "--regex",
+            "--extension",
+            "rs",
+            "--limit",
+            "5",
+        ]);
+        assert!(cli.is_ok());
+        match cli.unwrap().command {
+            Commands::Grep {
+                pattern,
+                case_sensitive,
+                regex,
+                extension,
+                limit,
+                ..
+            } => {
+                assert_eq!(pattern, "error");
+                assert!(case_sensitive);
+                assert!(regex);
+                assert_eq!(extension.as_deref(), Some("rs"));
+                assert_eq!(limit, Some(5));
+            }
+            _ => panic!("expected Grep command"),
+        }
     }
 }
