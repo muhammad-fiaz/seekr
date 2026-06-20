@@ -2,7 +2,6 @@
 name = "seekr"
 version = "0.1.0"
 edition = "2024"
-rust-version = "1.85.0"
 authors = ["Muhammad Fiaz <contact@muhammadfiaz.com>"]
 description = "A fast, local-first, privacy-focused file search engine and command-line utility written in Rust."
 license = "MIT"
