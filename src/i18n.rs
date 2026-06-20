@@ -356,58 +356,187 @@ impl Translations {
     pub fn from_custom(translations: HashMap<String, String>) -> Self {
         let default = Self::english();
         Self {
-            indexed_files: translations.get("indexed_files").cloned().unwrap_or(default.indexed_files),
-            indexed_dirs: translations.get("indexed_dirs").cloned().unwrap_or(default.indexed_dirs),
-            search_results: translations.get("search_results").cloned().unwrap_or(default.search_results),
-            no_results: translations.get("no_results").cloned().unwrap_or(default.no_results),
-            search_time: translations.get("search_time").cloned().unwrap_or(default.search_time),
-            index_stats: translations.get("index_stats").cloned().unwrap_or(default.index_stats),
+            indexed_files: translations
+                .get("indexed_files")
+                .cloned()
+                .unwrap_or(default.indexed_files),
+            indexed_dirs: translations
+                .get("indexed_dirs")
+                .cloned()
+                .unwrap_or(default.indexed_dirs),
+            search_results: translations
+                .get("search_results")
+                .cloned()
+                .unwrap_or(default.search_results),
+            no_results: translations
+                .get("no_results")
+                .cloned()
+                .unwrap_or(default.no_results),
+            search_time: translations
+                .get("search_time")
+                .cloned()
+                .unwrap_or(default.search_time),
+            index_stats: translations
+                .get("index_stats")
+                .cloned()
+                .unwrap_or(default.index_stats),
             files: translations.get("files").cloned().unwrap_or(default.files),
-            directories: translations.get("directories").cloned().unwrap_or(default.directories),
-            total_size: translations.get("total_size").cloned().unwrap_or(default.total_size),
-            hidden_files: translations.get("hidden_files").cloned().unwrap_or(default.hidden_files),
-            unique_extensions: translations.get("unique_extensions").cloned().unwrap_or(default.unique_extensions),
-            last_indexed: translations.get("last_indexed").cloned().unwrap_or(default.last_indexed),
+            directories: translations
+                .get("directories")
+                .cloned()
+                .unwrap_or(default.directories),
+            total_size: translations
+                .get("total_size")
+                .cloned()
+                .unwrap_or(default.total_size),
+            hidden_files: translations
+                .get("hidden_files")
+                .cloned()
+                .unwrap_or(default.hidden_files),
+            unique_extensions: translations
+                .get("unique_extensions")
+                .cloned()
+                .unwrap_or(default.unique_extensions),
+            last_indexed: translations
+                .get("last_indexed")
+                .cloned()
+                .unwrap_or(default.last_indexed),
             root: translations.get("root").cloned().unwrap_or(default.root),
             error: translations.get("error").cloned().unwrap_or(default.error),
-            not_found: translations.get("not_found").cloned().unwrap_or(default.not_found),
-            permission_denied: translations.get("permission_denied").cloned().unwrap_or(default.permission_denied),
-            indexing: translations.get("indexing").cloned().unwrap_or(default.indexing),
-            watching: translations.get("watching").cloned().unwrap_or(default.watching),
-            press_ctrl_c: translations.get("press_ctrl_c").cloned().unwrap_or(default.press_ctrl_c),
-            created: translations.get("created").cloned().unwrap_or(default.created),
-            modified: translations.get("modified").cloned().unwrap_or(default.modified),
-            deleted: translations.get("deleted").cloned().unwrap_or(default.deleted),
-            renamed: translations.get("renamed").cloned().unwrap_or(default.renamed),
-            configuration: translations.get("configuration").cloned().unwrap_or(default.configuration),
-            search_root: translations.get("search_root").cloned().unwrap_or(default.search_root),
-            cache_enabled: translations.get("cache_enabled").cloned().unwrap_or(default.cache_enabled),
-            cache_ttl: translations.get("cache_ttl").cloned().unwrap_or(default.cache_ttl),
-            default_limit: translations.get("default_limit").cloned().unwrap_or(default.default_limit),
+            not_found: translations
+                .get("not_found")
+                .cloned()
+                .unwrap_or(default.not_found),
+            permission_denied: translations
+                .get("permission_denied")
+                .cloned()
+                .unwrap_or(default.permission_denied),
+            indexing: translations
+                .get("indexing")
+                .cloned()
+                .unwrap_or(default.indexing),
+            watching: translations
+                .get("watching")
+                .cloned()
+                .unwrap_or(default.watching),
+            press_ctrl_c: translations
+                .get("press_ctrl_c")
+                .cloned()
+                .unwrap_or(default.press_ctrl_c),
+            created: translations
+                .get("created")
+                .cloned()
+                .unwrap_or(default.created),
+            modified: translations
+                .get("modified")
+                .cloned()
+                .unwrap_or(default.modified),
+            deleted: translations
+                .get("deleted")
+                .cloned()
+                .unwrap_or(default.deleted),
+            renamed: translations
+                .get("renamed")
+                .cloned()
+                .unwrap_or(default.renamed),
+            configuration: translations
+                .get("configuration")
+                .cloned()
+                .unwrap_or(default.configuration),
+            search_root: translations
+                .get("search_root")
+                .cloned()
+                .unwrap_or(default.search_root),
+            cache_enabled: translations
+                .get("cache_enabled")
+                .cloned()
+                .unwrap_or(default.cache_enabled),
+            cache_ttl: translations
+                .get("cache_ttl")
+                .cloned()
+                .unwrap_or(default.cache_ttl),
+            default_limit: translations
+                .get("default_limit")
+                .cloned()
+                .unwrap_or(default.default_limit),
             color: translations.get("color").cloned().unwrap_or(default.color),
-            database: translations.get("database").cloned().unwrap_or(default.database),
-            running_diagnostics: translations.get("running_diagnostics").cloned().unwrap_or(default.running_diagnostics),
-            all_checks_passed: translations.get("all_checks_passed").cloned().unwrap_or(default.all_checks_passed),
-            removed_stale: translations.get("removed_stale").cloned().unwrap_or(default.removed_stale),
-            no_stale: translations.get("no_stale").cloned().unwrap_or(default.no_stale),
-            version: translations.get("version").cloned().unwrap_or(default.version),
-            search: translations.get("search").cloned().unwrap_or(default.search),
+            database: translations
+                .get("database")
+                .cloned()
+                .unwrap_or(default.database),
+            running_diagnostics: translations
+                .get("running_diagnostics")
+                .cloned()
+                .unwrap_or(default.running_diagnostics),
+            all_checks_passed: translations
+                .get("all_checks_passed")
+                .cloned()
+                .unwrap_or(default.all_checks_passed),
+            removed_stale: translations
+                .get("removed_stale")
+                .cloned()
+                .unwrap_or(default.removed_stale),
+            no_stale: translations
+                .get("no_stale")
+                .cloned()
+                .unwrap_or(default.no_stale),
+            version: translations
+                .get("version")
+                .cloned()
+                .unwrap_or(default.version),
+            search: translations
+                .get("search")
+                .cloned()
+                .unwrap_or(default.search),
             index: translations.get("index").cloned().unwrap_or(default.index),
             watch: translations.get("watch").cloned().unwrap_or(default.watch),
             stats: translations.get("stats").cloned().unwrap_or(default.stats),
-            doctor: translations.get("doctor").cloned().unwrap_or(default.doctor),
-            config: translations.get("config").cloned().unwrap_or(default.config),
-            reindex: translations.get("reindex").cloned().unwrap_or(default.reindex),
-            benchmark: translations.get("benchmark").cloned().unwrap_or(default.benchmark),
-            open_file: translations.get("open_file").cloned().unwrap_or(default.open_file),
-            open_dir: translations.get("open_dir").cloned().unwrap_or(default.open_dir),
-            reveal: translations.get("reveal").cloned().unwrap_or(default.reveal),
-            history: translations.get("history").cloned().unwrap_or(default.history),
+            doctor: translations
+                .get("doctor")
+                .cloned()
+                .unwrap_or(default.doctor),
+            config: translations
+                .get("config")
+                .cloned()
+                .unwrap_or(default.config),
+            reindex: translations
+                .get("reindex")
+                .cloned()
+                .unwrap_or(default.reindex),
+            benchmark: translations
+                .get("benchmark")
+                .cloned()
+                .unwrap_or(default.benchmark),
+            open_file: translations
+                .get("open_file")
+                .cloned()
+                .unwrap_or(default.open_file),
+            open_dir: translations
+                .get("open_dir")
+                .cloned()
+                .unwrap_or(default.open_dir),
+            reveal: translations
+                .get("reveal")
+                .cloned()
+                .unwrap_or(default.reveal),
+            history: translations
+                .get("history")
+                .cloned()
+                .unwrap_or(default.history),
             saved: translations.get("saved").cloned().unwrap_or(default.saved),
-            analytics: translations.get("analytics").cloned().unwrap_or(default.analytics),
+            analytics: translations
+                .get("analytics")
+                .cloned()
+                .unwrap_or(default.analytics),
             grep: translations.get("grep").cloned().unwrap_or(default.grep),
-            ml_search: translations.get("ml_search").cloned().unwrap_or(default.ml_search),
-            semantic: translations.get("semantic").cloned().unwrap_or(default.semantic),
+            ml_search: translations
+                .get("ml_search")
+                .cloned()
+                .unwrap_or(default.ml_search),
+            semantic: translations
+                .get("semantic")
+                .cloned()
+                .unwrap_or(default.semantic),
         }
     }
 
