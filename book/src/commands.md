@@ -44,6 +44,84 @@ seekr search <PATTERN> [OPTIONS]
 - `--order <ORDER>` - Sort order: asc, desc
 - `--output <FILE>` - Export results to file (JSON/CSV)
 
+## seekr grep
+
+Search file contents (grep-like).
+
+```bash
+seekr grep <PATTERN> [OPTIONS]
+```
+
+**Options:**
+- `--root <PATH>` - Search in a specific root directory
+- `-S, --case-sensitive` - Case-sensitive matching
+- `-r, --regex` - Use regex matching
+- `-x, --extension <EXT>` - Filter by extension
+- `--max-size <BYTES>` - Maximum file size
+- `-l, --limit <N>` - Maximum number of results
+
+## seekr ml-search
+
+Search with ML-based relevance scoring.
+
+```bash
+seekr ml-search <PATTERN> [OPTIONS]
+```
+
+**Options:**
+- `-l, --limit <N>` - Maximum number of results
+
+## seekr semantic
+
+Perform semantic search using TF-IDF similarity.
+
+```bash
+seekr semantic <QUERY> [OPTIONS]
+```
+
+**Options:**
+- `-l, --limit <N>` - Maximum number of results
+
+## seekr history
+
+Manage search history.
+
+```bash
+seekr history <ACTION>
+```
+
+**Actions:**
+- `list` - Show recent search history
+- `clear` - Clear all search history
+
+**Options for list:**
+- `-l, --limit <N>` - Number of entries to show (default: 20)
+
+## seekr saved
+
+Manage saved searches.
+
+```bash
+seekr saved <ACTION>
+```
+
+**Actions:**
+- `list` - List all saved searches
+- `save <NAME> <PATTERN>` - Save a search
+- `load <NAME>` - Load and execute a saved search
+- `delete <NAME>` - Delete a saved search
+
+**Options for save:**
+- `-t, --tags <TAGS>` - Comma-separated tags
+
+## seekr analytics
+
+View analytics and file type distribution.
+
+```bash
+seekr analytics [PATH]
+```
+
 ## seekr watch
 
 Watch a directory for changes and update the index.

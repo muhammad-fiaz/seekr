@@ -30,14 +30,45 @@ seekr search '\.toml$' --regex
 seekr search "cnfg" --fuzzy
 ```
 
-## 4. Export Results
+## 4. Content Search (Grep)
+
+```bash
+seekr grep "fn main"
+seekr grep "TODO" --case-sensitive
+seekr grep "error" --extension rs
+```
+
+## 5. ML & Semantic Search
+
+```bash
+# ML-based relevance scoring
+seekr ml-search "configuration file"
+
+# Semantic search (TF-IDF similarity)
+seekr semantic "error handling"
+```
+
+## 6. Search History & Saved Searches
+
+```bash
+# View search history
+seekr history list
+
+# Save a search
+seekr saved save "rust-files" "*.rs" --tags "rust,code"
+
+# Load a saved search
+seekr saved load "rust-files"
+```
+
+## 7. Export Results
 
 ```bash
 seekr search "config" --format json --output results.json
 seekr search "config" --format csv --output results.csv
 ```
 
-## 5. Watch for Changes
+## 8. Watch for Changes
 
 ```bash
 seekr watch .
@@ -66,6 +97,22 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     for r in &results {
         println!("{}", r.entry.path.display());
     }
+
+    // Content search (grep)
+    let content_results = app.content_search("fn main", &Default::default())?;
+
+    // ML-based search
+    let ml_results = app.ml_search(&query)?;
+
+    // Semantic search
+    let semantic_results = app.semantic_search(&query)?;
+
+    // Search history
+    app.record_search("main.rs", false, false, false, results.len())?;
+    let history = app.get_history(10)?;
+
+    // Saved searches
+    app.save_search("my-search", Some("Find main files"), &query, &["rust".into()])?;
 
     Ok(())
 }

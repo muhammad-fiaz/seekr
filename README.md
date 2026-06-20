@@ -42,6 +42,9 @@ A Rust-powered, cross-platform file search engine designed with a clean, modular
 - [CLI Usage](#cli-usage)
   - [Indexing Files](#indexing-files)
   - [Searching Files](#searching-files)
+  - [Content Search (Grep)](#content-search-grep)
+  - [ML & Semantic Search](#ml--semantic-search)
+  - [Search History & Saved Searches](#search-history--saved-searches)
   - [Watching Directories](#watching-directories)
   - [File Operations](#file-operations)
 - [Configuration](#configuration)
@@ -63,6 +66,9 @@ A Rust-powered, cross-platform file search engine designed with a clean, modular
 | **Path Search** | Search within full file paths for precise location-based queries. |
 | **Regex Search** | Use regular expressions for advanced pattern matching. |
 | **Fuzzy Search** | Find files with fuzzy matching for typo-tolerant queries. |
+| **Content Search (Grep)** | Search within file contents like grep with regex support. |
+| **ML Relevance** | Machine learning-based relevance scoring for better results. |
+| **Semantic Search** | TF-IDF based semantic similarity search. |
 | **Extension Filter** | Filter results by file extension (e.g., `.rs`, `.txt`). |
 | **Size Filters** | Filter files by minimum and maximum size. |
 | **Date Filters** | Filter by modification date ranges. |
@@ -76,6 +82,17 @@ A Rust-powered, cross-platform file search engine designed with a clean, modular
 | **Cross-Platform** | Native support for Windows, Linux, and macOS. |
 | **Library + CLI** | Use as a Rust library or a standalone CLI tool. |
 | **Zero Telemetry** | No analytics, tracking, or external services. |
+| **Search History** | Track and review past search queries. |
+| **Saved Searches** | Save frequently used searches with tags. |
+| **Plugin System** | Extensible plugin architecture with hooks. |
+| **Custom Ranking** | Pluggable ranking algorithms (TF-IDF, BM25, etc.). |
+| **Distributed Indexing** | Index across multiple nodes in a cluster. |
+| **Network Search** | Search network shares (SMB/CIFS). |
+| **Real-time Collaboration** | Share search sessions with collaborators. |
+| **Advanced Analytics** | Detailed search and file type analytics. |
+| **Web UI API** | HTTP API for web interface integration. |
+| **Multi-language Support** | 10 languages supported (EN, ES, FR, DE, JA, ZH, PT, RU, AR, HI). |
+| **Mobile API** | Lightweight API optimized for mobile clients. |
 
 </details>
 
@@ -147,6 +164,22 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("{} (score: {:.0})", result.entry.path.display(), result.score);
     }
 
+    // 4. Content search (grep-like)
+    let content_results = app.content_search("fn main", &Default::default())?;
+
+    // 5. ML-based search
+    let ml_results = app.ml_search(&query)?;
+
+    // 6. Semantic search
+    let semantic_results = app.semantic_search(&query)?;
+
+    // 7. Search history
+    app.record_search("main.rs", false, false, false, results.len())?;
+    let history = app.get_history(10)?;
+
+    // 8. Saved searches
+    app.save_search("my-search", Some("Find main files"), &query, &["rust".into()])?;
+
     Ok(())
 }
 ```
@@ -205,6 +238,75 @@ seekr search "." --min-size 1024 --max-size 1048576
 JSON output:
 ```bash
 seekr search "config" --format json --output results.json
+```
+
+### Content Search (Grep)
+Search within file contents:
+```bash
+seekr grep "fn main"
+```
+
+Case-sensitive content search:
+```bash
+seekr grep "TODO" --case-sensitive
+```
+
+Regex content search:
+```bash
+seekr grep "fn \w+" --regex
+```
+
+Filter by extension:
+```bash
+seekr grep "error" --extension rs
+```
+
+### ML & Semantic Search
+Machine learning-based relevance search:
+```bash
+seekr ml-search "configuration file"
+```
+
+Semantic search (TF-IDF similarity):
+```bash
+seekr semantic "error handling"
+```
+
+### Search History & Saved Searches
+View search history:
+```bash
+seekr history list
+```
+
+Clear search history:
+```bash
+seekr history clear
+```
+
+Save a search:
+```bash
+seekr saved save "rust-files" "*.rs" --tags "rust,code"
+```
+
+List saved searches:
+```bash
+seekr saved list
+```
+
+Load and execute a saved search:
+```bash
+seekr saved load "rust-files"
+```
+
+Delete a saved search:
+```bash
+seekr saved delete "rust-files"
+```
+
+### Analytics
+View analytics and file type distribution:
+```bash
+seekr analytics .
 ```
 
 ### Watching Directories
@@ -326,23 +428,37 @@ Seekr uses a library-first architecture with strict separation of concerns:
 ```
 seekr/
 ├── src/
-│   ├── lib.rs          # Library root
-│   ├── main.rs         # CLI entry point
-│   ├── types.rs        # Domain models
-│   ├── error.rs        # Error types
-│   ├── database.rs     # SQLite persistence
-│   ├── indexer.rs      # Filesystem traversal
-│   ├── search.rs       # Query engine
-│   ├── watcher.rs      # Filesystem monitoring
-│   ├── platform.rs     # OS abstractions
-│   ├── config.rs       # Configuration management
-│   ├── cache.rs        # Caching layer
-│   ├── core.rs         # Application facade
-│   └── cli.rs          # CLI definitions, dispatch & output
-├── examples/           # Feature demos
-├── benches/            # Benchmarks
-├── book/               # mdBook documentation
-└── .github/            # CI/CD workflows
+│   ├── lib.rs              # Library root
+│   ├── main.rs             # CLI entry point
+│   ├── types.rs            # Domain models
+│   ├── error.rs            # Error types
+│   ├── database.rs         # SQLite persistence
+│   ├── indexer.rs          # Filesystem traversal
+│   ├── search.rs           # Query engine
+│   ├── content_search.rs   # Grep-like content search
+│   ├── history.rs          # Search history tracking
+│   ├── saved_searches.rs   # Saved search queries
+│   ├── plugin.rs           # Plugin system
+│   ├── ranking.rs          # Custom ranking algorithms
+│   ├── distributed.rs      # Distributed indexing
+│   ├── network.rs          # Network file search
+│   ├── collaboration.rs    # Real-time collaboration
+│   ├── analytics.rs        # Advanced analytics
+│   ├── web.rs              # HTTP API server
+│   ├── ml.rs               # ML-based relevance
+│   ├── semantic.rs         # Semantic search
+│   ├── i18n.rs             # Multi-language support
+│   ├── mobile.rs           # Mobile companion API
+│   ├── watcher.rs          # Filesystem monitoring
+│   ├── platform.rs         # OS abstractions
+│   ├── config.rs           # Configuration management
+│   ├── cache.rs            # Caching layer
+│   ├── core.rs             # Application facade
+│   └── cli.rs              # CLI definitions, dispatch & output
+├── examples/               # Feature demos
+├── benches/                # Benchmarks
+├── book/                   # mdBook documentation
+└── .github/                # CI/CD workflows
 ```
 
 ---
@@ -352,13 +468,21 @@ seekr/
 Run any example to see Seekr in action:
 
 ```bash
-cargo run --example quick_start      # Basic indexing and search
-cargo run --example search_modes     # All search modes (regex, fuzzy, filters)
-cargo run --example indexing          # Full, incremental, and custom indexing
-cargo run --example caching          # Cache layer usage
-cargo run --example configuration    # Config loading and validation
-cargo run --example export_formats   # JSON, CSV, and pretty export
-cargo run --example platform_ops     # Platform directories and file ops
+cargo run --example quick_start            # Basic indexing and search
+cargo run --example search_modes           # All search modes (regex, fuzzy, filters)
+cargo run --example indexing               # Full, incremental, and custom indexing
+cargo run --example caching               # Cache layer usage
+cargo run --example configuration         # Config loading and validation
+cargo run --example export_formats        # JSON, CSV, and pretty export
+cargo run --example platform_ops          # Platform directories and file ops
+cargo run --example content_search_demo   # Grep-like content search
+cargo run --example ml_search_demo        # ML-based relevance scoring
+cargo run --example semantic_search_demo  # TF-IDF semantic search
+cargo run --example history_demo          # Search history tracking
+cargo run --example saved_searches_demo   # Saved search management
+cargo run --example plugin_demo           # Plugin system with hooks
+cargo run --example i18n_demo             # Multi-language support
+cargo run --example ranking_demo          # Custom ranking algorithms
 ```
 
 ---

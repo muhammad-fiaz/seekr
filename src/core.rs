@@ -1,13 +1,19 @@
 use std::path::Path;
 use std::sync::Mutex;
 
+use crate::analytics;
 use crate::cache::{IndexCache, MetadataCache, SearchCache};
 use crate::config;
+use crate::content_search::{ContentSearchConfig, ContentSearchResult};
 use crate::database::Database;
 use crate::error::{SeekrError, SeekrResult};
+use crate::history::HistoryEntry;
 use crate::indexer;
+use crate::ml::LinearRelevanceModel;
 use crate::platform;
+use crate::saved_searches::SavedSearch;
 use crate::search;
+use crate::semantic::SemanticEncoder;
 use crate::types::*;
 
 /// The main application facade that coordinates all services.
@@ -21,6 +27,8 @@ pub struct SeekrApp {
     search_cache: SearchCache,
     metadata_cache: MetadataCache,
     index_cache: IndexCache,
+    ml_model: LinearRelevanceModel,
+    semantic_encoder: Mutex<Option<SemanticEncoder>>,
 }
 
 impl SeekrApp {
@@ -42,6 +50,8 @@ impl SeekrApp {
             search_cache,
             metadata_cache,
             index_cache,
+            ml_model: LinearRelevanceModel::new(),
+            semantic_encoder: Mutex::new(None),
         })
     }
 
@@ -242,6 +252,208 @@ impl SeekrApp {
     /// Acquires a lock on the underlying database.
     pub fn database(&self) -> std::sync::MutexGuard<'_, Database> {
         self.db.lock().expect("database lock poisoned")
+    }
+
+    /// Performs content search (grep-like) within indexed files.
+    pub fn content_search(
+        &self,
+        pattern: &str,
+        config: &ContentSearchConfig,
+    ) -> SeekrResult<Vec<ContentSearchResult>> {
+        let db = self
+            .db
+            .lock()
+            .map_err(|e| SeekrError::Search(format!("lock error: {}", e)))?;
+        let entries = db.get_all_files(100_000, 0)?;
+        drop(db);
+        crate::content_search::content_search(&entries, pattern, config)
+    }
+
+    /// Records a search in history.
+    pub fn record_search(
+        &self,
+        pattern: &str,
+        case_sensitive: bool,
+        use_regex: bool,
+        use_fuzzy: bool,
+        result_count: usize,
+    ) -> SeekrResult<i64> {
+        let db = self
+            .db
+            .lock()
+            .map_err(|e| SeekrError::Search(format!("lock error: {}", e)))?;
+        db.record_search(pattern, case_sensitive, use_regex, use_fuzzy, result_count)
+    }
+
+    /// Returns recent search history.
+    pub fn get_history(&self, limit: usize) -> SeekrResult<Vec<HistoryEntry>> {
+        let db = self
+            .db
+            .lock()
+            .map_err(|e| SeekrError::Search(format!("lock error: {}", e)))?;
+        db.get_history(limit)
+    }
+
+    /// Clears search history.
+    pub fn clear_history(&self) -> SeekrResult<()> {
+        let db = self
+            .db
+            .lock()
+            .map_err(|e| SeekrError::Search(format!("lock error: {}", e)))?;
+        db.clear_history()
+    }
+
+    /// Saves a search query.
+    pub fn save_search(
+        &self,
+        name: &str,
+        description: Option<&str>,
+        query: &SearchQuery,
+        tags: &[String],
+    ) -> SeekrResult<i64> {
+        let db = self
+            .db
+            .lock()
+            .map_err(|e| SeekrError::Search(format!("lock error: {}", e)))?;
+        db.save_search(name, description, query, tags)
+    }
+
+    /// Loads a saved search by name.
+    pub fn load_saved_search(&self, name: &str) -> SeekrResult<Option<SavedSearch>> {
+        let db = self
+            .db
+            .lock()
+            .map_err(|e| SeekrError::Search(format!("lock error: {}", e)))?;
+        db.load_search(name)
+    }
+
+    /// Lists all saved searches.
+    pub fn list_saved_searches(&self) -> SeekrResult<Vec<SavedSearch>> {
+        let db = self
+            .db
+            .lock()
+            .map_err(|e| SeekrError::Search(format!("lock error: {}", e)))?;
+        db.list_saved_searches()
+    }
+
+    /// Deletes a saved search.
+    pub fn delete_saved_search(&self, name: &str) -> SeekrResult<bool> {
+        let db = self
+            .db
+            .lock()
+            .map_err(|e| SeekrError::Search(format!("lock error: {}", e)))?;
+        db.delete_search(name)
+    }
+
+    /// Generates an analytics report for indexed files.
+    pub fn analytics_report(&self, root: &Path) -> SeekrResult<analytics::AnalyticsReport> {
+        let db = self
+            .db
+            .lock()
+            .map_err(|e| SeekrError::Search(format!("lock error: {}", e)))?;
+        let entries = db.get_all_files(100_000, 0)?;
+        let stats = db.get_stats(root)?;
+        drop(db);
+
+        let collector = analytics::AnalyticsCollector::new();
+        Ok(analytics::generate_report(&collector, &entries, &stats))
+    }
+
+    /// Performs ML-based relevance scoring.
+    pub fn ml_search(&self, query: &SearchQuery) -> SeekrResult<Vec<SearchResult>> {
+        let db = self
+            .db
+            .lock()
+            .map_err(|e| SeekrError::Search(format!("lock error: {}", e)))?;
+        let entries = db.get_all_files(1000, 0)?;
+        drop(db);
+
+        let mut results: Vec<SearchResult> = entries
+            .into_iter()
+            .filter(|e| !e.is_dir)
+            .map(|entry| {
+                let score = self.ml_model.score_entry(&entry, query);
+                SearchResult {
+                    entry,
+                    score,
+                    matched_indices: vec![],
+                }
+            })
+            .filter(|r| r.score > 0.0)
+            .collect();
+
+        results.sort_by(|a, b| {
+            b.score
+                .partial_cmp(&a.score)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
+        results.truncate(query.limit.unwrap_or(50));
+        Ok(results)
+    }
+
+    /// Performs semantic search using TF-IDF similarity.
+    pub fn semantic_search(&self, query: &SearchQuery) -> SeekrResult<Vec<SearchResult>> {
+        let db = self
+            .db
+            .lock()
+            .map_err(|e| SeekrError::Search(format!("lock error: {}", e)))?;
+        let entries = db.get_all_files(10000, 0)?;
+        drop(db);
+
+        {
+            let mut enc = self
+                .semantic_encoder
+                .lock()
+                .map_err(|e| SeekrError::Search(format!("lock error: {}", e)))?;
+            if enc.is_none() {
+                *enc = Some(SemanticEncoder::build(&entries));
+            }
+        }
+
+        let enc = self
+            .semantic_encoder
+            .lock()
+            .map_err(|e| SeekrError::Search(format!("lock error: {}", e)))?;
+        let encoder = enc.as_ref().unwrap();
+
+        let mut results: Vec<SearchResult> = entries
+            .into_iter()
+            .filter(|e| !e.is_dir)
+            .map(|entry| {
+                let score = encoder.similarity(query, &entry);
+                SearchResult {
+                    entry,
+                    score,
+                    matched_indices: vec![],
+                }
+            })
+            .filter(|r| r.score > 0.0)
+            .collect();
+
+        results.sort_by(|a, b| {
+            b.score
+                .partial_cmp(&a.score)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
+        results.truncate(query.limit.unwrap_or(50));
+        Ok(results)
+    }
+
+    /// Rebuilds the semantic encoder from current index.
+    pub fn rebuild_semantic_encoder(&self) -> SeekrResult<()> {
+        let db = self
+            .db
+            .lock()
+            .map_err(|e| SeekrError::Search(format!("lock error: {}", e)))?;
+        let entries = db.get_all_files(100_000, 0)?;
+        drop(db);
+
+        let mut enc = self
+            .semantic_encoder
+            .lock()
+            .map_err(|e| SeekrError::Search(format!("lock error: {}", e)))?;
+        *enc = Some(SemanticEncoder::build(&entries));
+        Ok(())
     }
 }
 

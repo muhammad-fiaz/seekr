@@ -73,9 +73,43 @@ impl Database {
             CREATE INDEX IF NOT EXISTS idx_files_parent ON files(parent_dir);
             CREATE INDEX IF NOT EXISTS idx_files_size ON files(size);
             CREATE INDEX IF NOT EXISTS idx_files_modified ON files(modified);
-            CREATE INDEX IF NOT EXISTS idx_files_hidden ON files(is_hidden);",
+            CREATE INDEX IF NOT EXISTS idx_files_hidden ON files(is_hidden);
+
+            CREATE TABLE IF NOT EXISTS search_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                pattern TEXT NOT NULL,
+                case_sensitive INTEGER NOT NULL DEFAULT 0,
+                use_regex INTEGER NOT NULL DEFAULT 0,
+                use_fuzzy INTEGER NOT NULL DEFAULT 0,
+                result_count INTEGER NOT NULL DEFAULT 0,
+                timestamp TEXT NOT NULL DEFAULT (datetime('now'))
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_history_timestamp ON search_history(timestamp);
+
+            CREATE TABLE IF NOT EXISTS saved_searches (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL UNIQUE,
+                description TEXT,
+                pattern TEXT NOT NULL,
+                case_sensitive INTEGER NOT NULL DEFAULT 0,
+                use_regex INTEGER NOT NULL DEFAULT 0,
+                use_fuzzy INTEGER NOT NULL DEFAULT 0,
+                extension TEXT,
+                tags TEXT NOT NULL DEFAULT '[]',
+                created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                last_used TEXT,
+                use_count INTEGER NOT NULL DEFAULT 0
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_saved_name ON saved_searches(name);",
         )?;
         Ok(())
+    }
+
+    /// Returns a reference to the underlying SQLite connection.
+    pub fn conn(&self) -> &Connection {
+        &self.conn
     }
 
     /// Inserts or replaces a file entry into the database.

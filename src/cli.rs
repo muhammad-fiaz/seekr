@@ -133,6 +133,75 @@ pub enum Commands {
         output: Option<String>,
     },
 
+    /// Search file contents (grep-like).
+    Grep {
+        /// The pattern to search for in file contents.
+        pattern: String,
+
+        /// Search in a specific root directory.
+        #[arg(long)]
+        root: Option<String>,
+
+        /// Case-sensitive search.
+        #[arg(short = 'S', long)]
+        case_sensitive: bool,
+
+        /// Use regex matching.
+        #[arg(short, long)]
+        regex: bool,
+
+        /// Filter by file extension.
+        #[arg(short = 'x', long)]
+        extension: Option<String>,
+
+        /// Maximum file size in bytes.
+        #[arg(long)]
+        max_size: Option<u64>,
+
+        /// Maximum number of results.
+        #[arg(short, long)]
+        limit: Option<usize>,
+    },
+
+    /// Search with ML-based relevance scoring.
+    MlSearch {
+        /// The search pattern.
+        pattern: String,
+
+        /// Maximum number of results.
+        #[arg(short, long)]
+        limit: Option<usize>,
+    },
+
+    /// Perform semantic search using TF-IDF similarity.
+    Semantic {
+        /// The search query.
+        query: String,
+
+        /// Maximum number of results.
+        #[arg(short, long)]
+        limit: Option<usize>,
+    },
+
+    /// Manage search history.
+    History {
+        #[command(subcommand)]
+        action: HistoryAction,
+    },
+
+    /// Manage saved searches.
+    Saved {
+        #[command(subcommand)]
+        action: SavedAction,
+    },
+
+    /// View analytics and statistics.
+    Analytics {
+        /// The root path to analyze.
+        #[arg(default_value = ".")]
+        path: String,
+    },
+
     /// Watch a directory for changes and update the index.
     Watch {
         /// The directory to watch.
@@ -201,6 +270,48 @@ pub enum Commands {
     Reveal {
         /// The file path to reveal.
         path: String,
+    },
+}
+
+/// History subcommands.
+#[derive(Subcommand, Debug)]
+pub enum HistoryAction {
+    /// Show recent search history.
+    List {
+        /// Number of entries to show.
+        #[arg(short, long, default_value = "20")]
+        limit: usize,
+    },
+    /// Clear all search history.
+    Clear,
+}
+
+/// Saved searches subcommands.
+#[derive(Subcommand, Debug)]
+pub enum SavedAction {
+    /// List all saved searches.
+    List,
+    /// Save the current search.
+    Save {
+        /// Name for the saved search.
+        name: String,
+
+        /// Search pattern.
+        pattern: String,
+
+        /// Optional tags (comma-separated).
+        #[arg(short, long)]
+        tags: Option<String>,
+    },
+    /// Load and execute a saved search.
+    Load {
+        /// Name of the saved search.
+        name: String,
+    },
+    /// Delete a saved search.
+    Delete {
+        /// Name of the saved search.
+        name: String,
     },
 }
 
@@ -308,6 +419,36 @@ pub fn dispatch(cli: &Cli) -> SeekrResult<()> {
             output.as_deref(),
             cli.format,
         ),
+
+        Commands::Grep {
+            pattern,
+            root,
+            case_sensitive,
+            regex,
+            extension,
+            max_size,
+            limit,
+        } => cmd_grep(
+            &app,
+            pattern,
+            root.as_deref(),
+            *case_sensitive,
+            *regex,
+            extension.as_deref(),
+            *max_size,
+            *limit,
+            cli.format,
+        ),
+
+        Commands::MlSearch { pattern, limit } => cmd_ml_search(&app, pattern, *limit, cli.format),
+
+        Commands::Semantic { query, limit } => cmd_semantic(&app, query, *limit, cli.format),
+
+        Commands::History { action } => cmd_history(&app, action),
+
+        Commands::Saved { action } => cmd_saved(&app, action),
+
+        Commands::Analytics { path } => cmd_analytics(&app, path),
 
         Commands::Watch {
             path,
@@ -629,6 +770,300 @@ fn cmd_reveal(path_str: &str) -> SeekrResult<()> {
     let path = PathBuf::from(path_str);
     platform::reveal_file(&path)?;
     print_success(&format!("Revealed: {}", path.display()));
+    Ok(())
+}
+
+#[allow(clippy::too_many_arguments)]
+fn cmd_grep(
+    app: &SeekrApp,
+    pattern: &str,
+    _root: Option<&str>,
+    case_sensitive: bool,
+    use_regex: bool,
+    extension: Option<&str>,
+    max_size: Option<u64>,
+    limit: Option<usize>,
+    _format: OutputFormatArg,
+) -> SeekrResult<()> {
+    let config = crate::content_search::ContentSearchConfig {
+        case_sensitive,
+        use_regex,
+        max_file_size: max_size.or(Some(10 * 1024 * 1024)),
+        extension: extension.map(String::from),
+        context_before: 0,
+        context_after: 0,
+        limit,
+    };
+
+    let start = Instant::now();
+    let results = app.content_search(pattern, &config)?;
+    let elapsed = start.elapsed();
+
+    if results.is_empty() {
+        print_warning("No content matches found.");
+        return Ok(());
+    }
+
+    println!(
+        "\n{} Found {} matches in {} files ({:.2?})\n",
+        "Results:".cyan().bold(),
+        results.iter().map(|r| r.total_matches).sum::<usize>(),
+        results.len(),
+        elapsed
+    );
+
+    for result in &results {
+        println!(
+            "{} {}",
+            result.entry.path.display().to_string().white(),
+            format!("({} matches)", result.total_matches).dimmed(),
+        );
+        for m in &result.matches {
+            println!(
+                "  {}:{} {}",
+                m.line_number.to_string().green(),
+                m.start_offset.to_string().dimmed(),
+                m.line_content,
+            );
+        }
+        println!();
+    }
+
+    Ok(())
+}
+
+fn cmd_ml_search(
+    app: &SeekrApp,
+    pattern: &str,
+    limit: Option<usize>,
+    format: OutputFormatArg,
+) -> SeekrResult<()> {
+    let query = SearchQuery {
+        pattern: pattern.to_string(),
+        limit: Some(limit.unwrap_or(50)),
+        ..SearchQuery::default()
+    };
+
+    let start = Instant::now();
+    let results = app.ml_search(&query)?;
+    let elapsed = start.elapsed();
+
+    match format {
+        OutputFormatArg::Json => print_json(&results)?,
+        OutputFormatArg::Csv => print_csv(&results),
+        OutputFormatArg::Pretty => print_results(&results, &elapsed),
+    }
+
+    Ok(())
+}
+
+fn cmd_semantic(
+    app: &SeekrApp,
+    query_str: &str,
+    limit: Option<usize>,
+    format: OutputFormatArg,
+) -> SeekrResult<()> {
+    let query = SearchQuery {
+        pattern: query_str.to_string(),
+        limit: Some(limit.unwrap_or(50)),
+        ..SearchQuery::default()
+    };
+
+    print_info("Building semantic index (first run may take a moment)...");
+    let start = Instant::now();
+    let results = app.semantic_search(&query)?;
+    let elapsed = start.elapsed();
+
+    match format {
+        OutputFormatArg::Json => print_json(&results)?,
+        OutputFormatArg::Csv => print_csv(&results),
+        OutputFormatArg::Pretty => print_results(&results, &elapsed),
+    }
+
+    Ok(())
+}
+
+fn cmd_history(app: &SeekrApp, action: &HistoryAction) -> SeekrResult<()> {
+    match action {
+        HistoryAction::List { limit } => {
+            let entries = app.get_history(*limit)?;
+            if entries.is_empty() {
+                print_warning("No search history found.");
+                return Ok(());
+            }
+            println!("\n{}", "Search History:".cyan().bold());
+            for entry in &entries {
+                let flags = [
+                    if entry.case_sensitive { "CS" } else { "" },
+                    if entry.use_regex { "RX" } else { "" },
+                    if entry.use_fuzzy { "FZ" } else { "" },
+                ];
+                let flags: Vec<&str> = flags.iter().copied().filter(|s| !s.is_empty()).collect();
+                let flags_str = if flags.is_empty() {
+                    String::new()
+                } else {
+                    format!(" [{}]", flags.join(","))
+                };
+
+                println!(
+                    "  {} {} ({} results){}",
+                    entry.timestamp.format("%Y-%m-%d %H:%M"),
+                    entry.pattern.green(),
+                    entry.result_count,
+                    flags_str.dimmed(),
+                );
+            }
+            println!();
+        }
+        HistoryAction::Clear => {
+            app.clear_history()?;
+            print_success("Search history cleared.");
+        }
+    }
+    Ok(())
+}
+
+fn cmd_saved(app: &SeekrApp, action: &SavedAction) -> SeekrResult<()> {
+    match action {
+        SavedAction::List => {
+            let searches = app.list_saved_searches()?;
+            if searches.is_empty() {
+                print_warning("No saved searches found.");
+                return Ok(());
+            }
+            println!("\n{}", "Saved Searches:".cyan().bold());
+            for s in &searches {
+                let tags_str = if s.tags.is_empty() {
+                    String::new()
+                } else {
+                    format!(" [{}]", s.tags.join(", "))
+                };
+                println!(
+                    "  {} {} (used {} times){}",
+                    s.name.green(),
+                    format!("'{}'", s.pattern).dimmed(),
+                    s.use_count,
+                    tags_str.dimmed(),
+                );
+            }
+            println!();
+        }
+        SavedAction::Save {
+            name,
+            pattern,
+            tags,
+        } => {
+            let query = SearchQuery {
+                pattern: pattern.to_string(),
+                ..SearchQuery::default()
+            };
+            let tag_list: Vec<String> = tags
+                .as_ref()
+                .map(|t| t.split(',').map(|s| s.trim().to_string()).collect())
+                .unwrap_or_default();
+            app.save_search(name, None, &query, &tag_list)?;
+            print_success(&format!("Search '{}' saved.", name));
+        }
+        SavedAction::Load { name } => {
+            if let Some(saved) = app.load_saved_search(name)? {
+                app.database().touch_saved_search(name)?;
+                let query = SearchQuery {
+                    pattern: saved.pattern,
+                    case_sensitive: saved.case_sensitive,
+                    use_regex: saved.use_regex,
+                    use_fuzzy: saved.use_fuzzy,
+                    extension: saved.extension,
+                    ..SearchQuery::default()
+                };
+                let start = Instant::now();
+                let results = app.search(&query)?;
+                let elapsed = start.elapsed();
+                print_results(&results, &elapsed);
+            } else {
+                print_error(&format!("Saved search '{}' not found.", name));
+            }
+        }
+        SavedAction::Delete { name } => {
+            if app.delete_saved_search(name)? {
+                print_success(&format!("Saved search '{}' deleted.", name));
+            } else {
+                print_error(&format!("Saved search '{}' not found.", name));
+            }
+        }
+    }
+    Ok(())
+}
+
+fn cmd_analytics(app: &SeekrApp, path_str: &str) -> SeekrResult<()> {
+    let path = PathBuf::from(path_str);
+    let report = app.analytics_report(&path)?;
+
+    println!("\n{}", "Analytics Report:".cyan().bold());
+    println!(
+        "  {} {}",
+        "Generated:".white(),
+        report.generated_at.format("%Y-%m-%d %H:%M:%S UTC")
+    );
+    println!();
+
+    println!("{}", "Index Statistics:".cyan().bold());
+    println!(
+        "  {} {}",
+        "Files:".white(),
+        report.index_stats.total_files.to_string().green()
+    );
+    println!(
+        "  {} {}",
+        "Directories:".white(),
+        report.index_stats.total_dirs.to_string().green()
+    );
+    println!(
+        "  {} {}",
+        "Total Size:".white(),
+        format_size(report.index_stats.total_size).yellow()
+    );
+    println!();
+
+    println!("{}", "File Type Distribution:".cyan().bold());
+    for (ext, count) in &report.file_types.top_extensions {
+        let size = report
+            .file_types
+            .extension_sizes
+            .get(ext)
+            .copied()
+            .unwrap_or(0);
+        println!(
+            "  {} {} files ({})",
+            format!(".{}", ext).green(),
+            count,
+            format_size(size).yellow()
+        );
+    }
+    println!();
+
+    println!("{}", "Search Analytics:".cyan().bold());
+    println!(
+        "  {} {}",
+        "Total Searches:".white(),
+        report.search.total_searches
+    );
+    println!(
+        "  {} {:.2}ms",
+        "Avg Duration:".white(),
+        report.search.avg_search_duration_ms
+    );
+    println!(
+        "  {} {}",
+        "No Results:".white(),
+        report.search.results_distribution.no_results
+    );
+    println!(
+        "  {} {}",
+        "Few Results:".white(),
+        report.search.results_distribution.few_results
+    );
+    println!();
+
     Ok(())
 }
 
