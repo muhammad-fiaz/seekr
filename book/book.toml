@@ -3,8 +3,21 @@ authors = ["Muhammad Fiaz <contact@muhammadfiaz.com>"]
 language = "en"
 src = "src"
 title = "Seekr Documentation"
+description = "A fast, local-first, privacy-focused file search engine"
+
+[build]
+build-dir = "book"
 
 [output.html]
 git-repository-url = "https://github.com/muhammad-fiaz/seekr"
 default-theme = "navy"
 preferred-dark-theme = "navy"
+additional-css = []
+additional-js = []
+site-url = "/seekr/"
+favicon = "favicon.svg"
+
+[output.html.search]
+enable = true
+limit-results = 30
+use-hierarchical-headings = true

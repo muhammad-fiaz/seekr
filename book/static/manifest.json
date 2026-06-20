@@ -8,14 +8,16 @@
   "theme_color": "#16213e",
   "icons": [
     {
-      "src": "/seekr/seekr_logo.png",
-      "sizes": "192x192",
-      "type": "image/png"
+      "src": "/seekr/seekr_logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
     },
     {
-      "src": "/seekr/seekr_logo.png",
-      "sizes": "512x512",
-      "type": "image/png"
+      "src": "/seekr/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "icon"
     }
   ]
 }
